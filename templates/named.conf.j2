@@ -112,14 +112,32 @@ zone "." {
 include "{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }}";
 {% endif %}
 
+{% if bind_zone_localhost_enable %}
+zone "localhost." { type master; file "{{ bind_config_standard_zones_path }}/localhost.db"; };
+{% endif %}
+{% if bind_zone_loopback_v4_enable %}
+zone "127.in-addr.arpa" { type master; file "{{ bind_config_standard_zones_path }}/loopback_v4.db"; };
+{% endif %}
+{% if bind_zone_loopback_v6_enable %}
+zone "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" { type master; file "{{ bind_config_standard_zones_path }}/loopback_v6.db"; };
+{% endif %}
 {% if bind_zones | length >0 %}
 {% for k,v in bind_zones.iteritems() %}
 zone "{{ v.name }}" {
 	type {{ v.type }};
+{% if v.type == 'forward' %}
+	forward {{ v.forward|default('only') }};
+        forwarders {
+{% for fwd in v.forwarders %}
+		{{ fwd }};
+{% endfor %}
+	};
+{% else %}
 {% if v.file is defined %}
 	file "{{ v.file }}";
 {% else %}
 	file "{{ bind_config_dynamic_zones_path  if v.dynamic|default(false) else bind_config_master_zones_path if v.type == 'master' else bind_config_slave_zones_path }}/{{ v.name }}.db";
+{% endif %}
 {% endif %}
 {% if v.parameters is defined %}
 {% for param in v.parameters %}

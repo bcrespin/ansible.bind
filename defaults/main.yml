@@ -33,6 +33,9 @@ bind_options_allow_query: []
 bind_options_allow_recursion: []
 bind_options_forwarders: []
 bind_zone_dot_file_location: 'etc/root.hint'
+bind_zone_localhost_enable: True
+bind_zone_loopback_v4_enable: True
+bind_zone_loopback_v6_enable: True
 bind_zone_default_retry: 15
 bind_zone_default_refresh: 3h
 bind_zone_default_expire: 1w
@@ -41,6 +44,7 @@ bind_zone_default_ttl: 86400
 bind_config_master_zones_path: "master/"
 bind_config_slave_zones_path: "slave/"
 bind_config_dynamic_zones_path: "dynamic/"
+bind_config_standard_zones_path: "standard/"
 bind_config_slave_zones: []
 bind_config_forward_zones: []
 zones_to_update: []

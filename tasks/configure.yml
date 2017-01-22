@@ -11,17 +11,22 @@
   template: src=blackholedomain.fake.zone.j2 dest={{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }} owner=root group={{ root_group }} mode=644
   when: bind_blackhole_malwaredomain_blocklist_url != ''
 
-- name: TEMP - empty blackhole domains list
-  file: path={{ bind_directory }}/{{ bind_blackhole_folder }}/blackholedomains.list state=touch
-
 - name: create additional folders
   file: path={{ bind_directory }}/{{ item }} owner={{ bind_user }} group={{ bind_group }} mode=0755 state=directory
-  with_items: ['logs','{{ bind_config_dynamic_zones_path }}','{{ bind_config_slave_zones_path }}' ]
+  with_items: ['logs','{{ bind_config_dynamic_zones_path }}','{{ bind_config_slave_zones_path }}','{{ bind_config_standard_zones_path }}' ]
 
 - name: named.conf file
   template: src=named.conf.j2 dest={{ bind_directory }}/etc/named.conf
   notify: service reload
   register: result
+
+- name: create standard zones
+  template: src={{ item.template }} dest={{ bind_directory }}/{{ bind_config_standard_zones_path }}/{{ item.target }}
+  when: "{{ item.enabled }}"
+  with_items:
+    - { template: "localhost_zone.j2", target: "localhost.db",  enabled: "{{ bind_zone_localhost_enable }}"  }
+    - { template: "loopback_v4_zone.j2", target: "loopback_v4.db", enabled: "{{ bind_zone_loopback_v4_enable }}" }
+    - { template: "loopback_v6_zone.j2", target: "loopback_v6.db", enabled: "{{ bind_zone_loopback_v6_enable }}" }
 
 - name: create unmanaged zone files
   template:
@@ -32,8 +37,9 @@
     group: "{{ bind_group }}"
   with_dict: "{{ bind_zones }}"
   when: 
-    - item.value.managed == false
+    - item.value.managed|default(false) == false
     - item.value.type != "slave"
+    - item.value.type != "forward"
   notify: service reload
 
 - name: create or update include zone datas
@@ -43,7 +49,7 @@
     owner: root
     group: "{{ root_group }}"
   with_dict: "{{ bind_zones }}"
-  when: item.value.managed
+  when: item.value.managed|default(false)
   register: res
   notify: service reload
 
