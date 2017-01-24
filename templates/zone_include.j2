@@ -1,15 +1,15 @@
 ; ansible managed
 ; do not edit by hand
-{% set myzone = item.value %}
+{% set myzone = item %}
 $TTL {{ myzone.default_ttl|default(bind_zone_default_ttl) }}
-{% for record in  myzone.content.records %}
+{% for record in  myzone.content.records|default([]) %}
 {% if record.ttl is defined %}
 $TTL {{ record.ttl }}
 {% endif %}
-{% if record.rdata is undefined %} 
-{{ record.name }}
-{% else %}
+{% if record.rdata is defined %}
 {{ record.name }}		{{ record.type }}	{{ record.rdata }}
+{% else %}
+{{ record.name }}
 {% endif %}
 {% if record.ttl is defined %}
 $TTL {{ myzone.default_ttl|default(bind_zone_default_ttl) }}

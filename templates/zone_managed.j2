@@ -1,11 +1,26 @@
 ; ansible managed - do not edit by hand
+{% set myzone = item[0] %}
+{% set serial = 1+ansible_dns_file_zone_serial_number[bind_directory +'/' + bind_config_master_zones_path +'/'+ myzone.name +'.db']  %}
 $TTL {{ bind_zone_default_ttl }}
-{% set serial = 1+ansible_dns_file_zone_serial_number[bind_directory +'/' + bind_config_master_zones_path +'/'+ bind_zones[item].name +'.db']  %}
-@		SOA	 {{ bind_dns_fqdn_name }}. {{ bind_hostmaster_name }}. (
+@               SOA      {{ bind_dns_fqdn_name }}. {{ bind_hostmaster_name }}. (
                                 {{ serial }} ; serial
-                                {{ bind_zones[item].content.refresh|default(bind_zone_default_refresh) }} ; refresh
-                                {{ bind_zones[item].content.retry|default(bind_zone_default_retry) }} ; retry
-                                {{ bind_zones[item].content.expire|default(bind_zone_default_expire) }} ; expire
-                                {{ bind_zones[item].content.nxdomain_ttl|default(bind_zone_default_nxdomain_ttl) }} ; nxdomain ttl
+                                {{ myzone.content.refresh|default(bind_zone_default_refresh) }} ; refresh
+                                {{ myzone.content.retry|default(bind_zone_default_retry) }} ; retry
+                                {{ myzone.content.expire|default(bind_zone_default_expire) }} ; expire
+                                {{ myzone.content.nxdomain_ttl|default(bind_zone_default_nxdomain_ttl) }} ; nxdomain ttl
                              )
-$INCLUDE {{ bind_config_master_zones_path }}/{{ bind_zones[item].content.name }}_ansible_include
+
+{% if myzone.content.ns is defined %}
+{% for entry in  myzone.content.ns %}
+				NS	{{ entry.rdata }}
+{% endfor %}
+{% else %}
+				NS	{{ bind_dns_fqdn_name }}.
+{% endif %}
+{% if myzone.content.mx is defined %}
+{% for entry in  myzone.content.mx %}
+				MX	{{ entry.priority|default('') }}	{{ entry.rdata }}
+{% endfor %}
+{% endif %}
+
+$INCLUDE {{ bind_config_master_zones_path }}/{{ myzone.name }}_ansible_include

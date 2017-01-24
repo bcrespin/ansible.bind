@@ -31,48 +31,55 @@
 - name: create unmanaged zone files
   template:
     src: basic_zone.db.j2
-    dest: "{{ bind_directory }}/{{ bind_config_dynamic_zones_path if item.value.dynamic|default(false) else  bind_config_master_zones_path }}/{{ item.value.name }}.db"
+    dest: "{{ bind_directory }}/{{ bind_config_dynamic_zones_path if item.dynamic|default(false) else  bind_config_master_zones_path }}/{{ item.name }}.db"
     force: no
     owner: "{{ bind_user }}"
     group: "{{ bind_group }}"
-  with_dict: "{{ bind_zones }}"
+  with_items: "{{ bind_zones }}"
   when: 
-    - item.value.managed|default(false) == false
-    - item.value.type != "slave"
-    - item.value.type != "forward"
+    - item.managed|default(false) == false
+    - item.type != "slave"
+    - item.type != "forward"
   notify: service reload
 
 - name: create or update include zone datas
   template:
     src: zone_include.j2
-    dest: "{{ bind_directory }}/{{ bind_config_master_zones_path }}/{{ item.value.name }}_ansible_include"
+    dest: "{{ bind_directory }}/{{ bind_config_master_zones_path }}/{{ item.name }}_ansible_include"
     owner: root
     group: "{{ root_group }}"
-  with_dict: "{{ bind_zones }}"
-  when: item.value.managed|default(false)
+  with_items: "{{ bind_zones }}"
+  when: item.managed|default(false)
   register: res
   notify: service reload
 
 - name: list zones that are updated
   set_fact:
-    zones_to_update: "{{ zones_to_update + [ item.item.key ] }}"
+    zones_to_update: "{{ zones_to_update + [ item.item.name] }}"
   when: "{{item.changed == true}}"
   with_items: "{{ res.results }}"
 
+- name: debug zones_to_update
+  debug: var=zones_to_update
+
 - name: create zone file list to be updated
   set_fact:
-     zone_file_list_to_update: "{{ zone_file_list_to_update|default([]) + [  bind_directory +'/' + bind_config_master_zones_path +'/'+ bind_zones[item].name +'.db' ] }}"
+     zone_file_list_to_update: "{{ zone_file_list_to_update|default([]) + [  bind_directory +'/' + bind_config_master_zones_path +'/'+ item +'.db' ] }}"
   with_items: "{{ zones_to_update }}"
   when: zones_to_update != []
 
 - name: get zone serial for zones need to be updated by ansible
-  get_zone_serial: file_zone="{{ zone_file_list_to_update }}"
+  get_zone_serial: file_zone='{{ zone_file_list_to_update }}'
   when: zones_to_update != []
 
 - name: update zone file
-  template: src=zone_managed.j2 dest= mode=0644 owner=root  group={{ root_group }}  dest="{{ bind_directory }}/{{ bind_config_master_zones_path }}/{{ bind_zones[item].name }}.db"
-  with_items: "{{ zones_to_update }}"
-  when: zones_to_update != []
+  template: src=zone_managed.j2 dest={{ bind_directory }}/{{ bind_config_master_zones_path }}/{{ item[1] }}.db mode=0644 owner=root  group={{ root_group }}
+  with_nested:
+    - "{{ bind_zones }}"
+    - "{{ zones_to_update }}"
+  when:
+    - zones_to_update != []
+    - "{{ item[0].name == item[1] }}"
 
 - name: ensure service started
   service: name={{ bind_service_name }} state=started enabled=yes
