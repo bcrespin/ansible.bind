@@ -132,7 +132,8 @@ zone "{{ v.name }}" {
 		{{ fwd }};
 {% endfor %}
 	};
-{% else %}
+{% endif %}
+{% if v.type == 'slave' or v.type == 'master' %}
 {% if v.file is defined %}
 	file "{{ v.file }}";
 {% else %}

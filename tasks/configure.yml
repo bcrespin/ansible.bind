@@ -28,7 +28,7 @@
     - { template: "loopback_v4_zone.j2", target: "loopback_v4.db", enabled: "{{ bind_zone_loopback_v4_enable }}" }
     - { template: "loopback_v6_zone.j2", target: "loopback_v6.db", enabled: "{{ bind_zone_loopback_v6_enable }}" }
 
-- name: create unmanaged zone files
+- name: create unmanaged by ansible  zone files
   template:
     src: basic_zone.db.j2
     dest: "{{ bind_directory }}/{{ bind_config_dynamic_zones_path if item.dynamic|default(false) else  bind_config_master_zones_path }}/{{ item.name }}.db"
@@ -38,8 +38,7 @@
   with_items: "{{ bind_zones }}"
   when: 
     - item.managed|default(false) == false
-    - item.type != "slave"
-    - item.type != "forward"
+    - item.type == "master"
   notify: service reload
 
 - name: create or update include zone datas
