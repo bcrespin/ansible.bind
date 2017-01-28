@@ -4,6 +4,7 @@ _bind_package_name: isc-bind--
 bind_service_name: named
 bind_user: _bind
 bind_group: _bind
+bind_blackhole_malwaredomain_blocklist_url: 'http://mirror2.malwaredomains.com/files/justdomains'
 bind_blackhole_folder: 'blackhole'
 bind_blackhole_zonefile: 'blackholedomains.zone'
 bind_blackhole_include_zones: 'blackholedomains.list'
