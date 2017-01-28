@@ -1,6 +1,24 @@
 #!/bin/sh
-
 ## this file is ansible managed
 ## do not edit by hand
 
-ftp -o - {{ bind_blackhole_malwaredomain_blocklist_url }} | grep -v '^#' | grep -v '^$' | awk '{ print "zone \"" $1 "\" { type master; file \"{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}\"; check-names ignore; };" }' >  {{ bind_blackhole_include_zones }}
+URL="{{ bind_blackhole_malwaredomain_blocklist_url }}"
+
+ftp -o /var/named/blackhole/blackholedomains.download $URL
+if [ "$?" == "1" ]; then
+  echo "download of $URL failed ...exit"
+  exit 1
+fi
+cat /var/named/blackhole/blackholedomains.download | grep -v '^#' | grep -v '^$' | awk '{ print "zone \" $1 \" { type master; file \"{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}\"; check-names ignore; };" }' >  blackholedomains.tmp
+diff -q blackholedomains.download  blackholedomains.list
+if [ "$?" == "1" ]; then
+  echo "domains list need update..."
+  cp blackholedomains.list blackholedomains.old
+  cp blackholedomains.download blackholedomains.list
+  echo "reload bind"
+  /etc/rc.d/isc_named reload
+  exit 0
+else
+  echo "no update..exit"
+  exit 0
+fi
