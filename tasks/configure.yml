@@ -1,16 +1,13 @@
 ---
 - name: create blackhole folder
   file: path={{ bind_directory }}/{{ bind_blackhole_folder }}  owner=root group={{ root_group }} mode=755 state=directory 
-  when: bind_blackhole_malwaredomain_blocklist_url != ''
-
-- name: generate blackhole download script
-  template: src=blackholeupdate.sh.j2  dest={{ bind_directory }}/{{ bind_blackhole_folder }}/blackholeupdate.sh owner=root group={{ root_group }} mode=750 
-  when: bind_blackhole_malwaredomain_blocklist_url != ''
 
 - name: generate blackhole zonefile
   template: src=blackholedomain.fake.zone.j2 dest={{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }} owner=root group={{ root_group }} mode=644
-  when: bind_blackhole_malwaredomain_blocklist_url != ''
 
+- name: create empty backhole domain list file
+  file: path={{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }} state=touch owner=root group={{ root_group }} mode=0644
+ 
 - name: create additional folders
   file: path={{ bind_directory }}/{{ item }} owner={{ bind_user }} group={{ bind_group }} mode=0755 state=directory
   with_items: ['logs','{{ bind_config_dynamic_zones_path }}','{{ bind_config_slave_zones_path }}','{{ bind_config_standard_zones_path }}' ]

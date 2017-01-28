@@ -107,10 +107,8 @@ zone "." {
 };
 {% endif %}
 
-{% if bind_blackhole_malwaredomain_blocklist_url != '' %}
-# blackhole domain from {{ bind_blackhole_malwaredomain_blocklist_url }}
+# blocked domains 
 include "{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }}";
-{% endif %}
 
 {% if bind_zone_localhost_enable %}
 zone "localhost." { type master; file "{{ bind_config_standard_zones_path }}/localhost.db"; };
