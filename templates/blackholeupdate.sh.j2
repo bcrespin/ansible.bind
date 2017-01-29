@@ -4,17 +4,20 @@
 
 URL="{{ bind_blackhole_malwaredomain_blocklist_url }}"
 
-ftp -o {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.download $URL
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+cd $SCRIPT_DIR
+
+ftp -o blackholedomains.download $URL
 if [ "$?" == "1" ]; then
   echo "download of $URL failed ...exit"
   exit 1
 fi
-cat {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.download | grep -v '^#' | grep -v '^$' | awk '{ print "zone \" $1 \" { type master; file \"{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}\"; check-names ignore; };" }' >  blackholedomains.tmp
-diff -q {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.download  {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.list
+cat blackholedomains.download | grep -v '^#' | grep -v '^$' | awk '{ print "zone \" $1 \" { type master; file \"{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}\"; check-names ignore; };" }' >  blackholedomains.tmp
+diff -q blackholedomains.tmp blackholedomains.list
 if [ "$?" == "1" ]; then
   echo "domains list need update..."
-  cp {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/{{ bind_blackhole_include_zones }} {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.old
-  cp {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/blackholedomains.download {{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}/{{ bind_blackhole_include_zones }}
+  cp {{ bind_blackhole_include_zones }} blackholedomains.old
+  cp blackholedomains.download {{ bind_blackhole_include_zones }}
   echo "reload bind"
   /etc/rc.d/isc_named reload
   exit 0

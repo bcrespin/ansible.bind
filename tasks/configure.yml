@@ -5,7 +5,10 @@
 - name: generate blackhole zonefile
   template: src=blackholedomain.fake.zone.j2 dest={{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }} owner=root group={{ root_group }} mode=644
 
-- name: create empty backhole domain list file
+- name: generate blackhole download script
+  template: src=blackholeupdate.sh.j2  dest={{ bind_directory }}/{{ bind_blackhole_folder }}/blackholeupdate.sh owner=root group={{ root_group }} mode=750 
+
+- name: touch backhole domain list file
   file: path={{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }} state=touch owner=root group={{ root_group }} mode=0644
  
 - name: create additional folders
@@ -37,6 +40,7 @@
     - item.managed|default(false) == false
     - item.type == "master"
   notify: service reload
+  no_log: true
 
 - name: create or update include zone datas
   template:
@@ -48,12 +52,14 @@
   when: item.managed|default(false)
   register: res
   notify: service reload
+  no_log: true
 
 - name: list zones that are updated
   set_fact:
     zones_to_update: "{{ zones_to_update + [ item.item.name] }}"
   when: "{{item.changed == true}}"
   with_items: "{{ res.results }}"
+  no_log: true
 
 - name: debug zones_to_update
   debug: var=zones_to_update
@@ -76,6 +82,7 @@
   when:
     - zones_to_update != []
     - "{{ item[0].name == item[1] }}"
+  no_log: true
 
 - name: ensure service started
   service: name={{ bind_service_name }} state=started enabled=yes
