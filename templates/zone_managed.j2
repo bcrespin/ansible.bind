@@ -23,4 +23,8 @@ $TTL {{ bind_zone_default_ttl }}
 {% endfor %}
 {% endif %}
 
+{% if bind_chrooted %}
 $INCLUDE {{ bind_config_master_zones_path }}/{{ myzone.name }}_ansible_include
+{% else %}
+$INCLUDE {{ bind_directory }}/{{ bind_config_master_zones_path }}/{{ myzone.name }}_ansible_include
+{% endif %}

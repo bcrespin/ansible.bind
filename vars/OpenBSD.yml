@@ -1,3 +1,5 @@
 ---
 root_group: wheel
 bind_service_name: isc_named
+bind_chrooted: True
+bind_config_fullpath: /var/named/etc/named.conf

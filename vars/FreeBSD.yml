@@ -1,0 +1,10 @@
+---
+_bind_package_name: bind910
+bind_service_name: named
+bind_user: bind
+bind_group: bind
+bind_directory: /usr/local/etc/namedb
+bind_root_hint_file: named.root
+bind_chrooted: False
+root_group: wheel
+bind_config_fullpath: /usr/local/etc/namedb/named.conf

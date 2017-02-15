@@ -16,7 +16,7 @@
   with_items: ['logs','{{ bind_config_dynamic_zones_path }}','{{ bind_config_slave_zones_path }}','{{ bind_config_standard_zones_path }}' ]
 
 - name: named.conf file
-  template: src=named.conf.j2 dest={{ bind_directory }}/etc/named.conf
+  template: src=named.conf.j2 dest={{ bind_config_fullpath }}
   notify: service reload
   register: result
 
