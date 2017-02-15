@@ -53,7 +53,12 @@ logging {
 {% for k in bind_logging_channels %}
 	channel "{{ k.name }}" {
 {% if k.file is defined %}
-		file "{{ k.file.name }}" versions {{ k.file.version|default(false) if k.file.version|default(false) else 'unlimited' }} {{ 'size ' + k.file.size|default(false) if k.file.size|default(false) else '' }} ;
+{% if bind_chrooted %}
+{% set myfile = k.file.name %} 
+{% else %}
+{% set myfile = bind_directory + '/' + k.file.name  %}
+{% endif %}
+		file "{{ myfile }}" versions {{ k.file.version|default(false) if k.file.version|default(false) else 'unlimited' }} {{ 'size ' + k.file.size|default(false) if k.file.size|default(false) else '' }} ;
 {% else %}
 		{{ k.out }};
 {% endif %}
@@ -103,21 +108,35 @@ key "{{ k.key }}" {
 {% if bind_options_forwarders == [] %}
 zone "." {
 	type hint;
-	file "{{ bind_root_hint_file }}";
+{% if not bind_chrooted %}
+        file "{{ bind_directory }}/{{ bind_root_hint_file }}";
+{% else %}
+        file "{{ bind_root_hint_file }}";
+{% endif %}
 };
 {% endif %}
 
 # blocked domains 
+{% if not bind_chrooted %}
+include "{{ bind_directory }}/{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }}";
+{% else %}
 include "{{ bind_blackhole_folder }}/{{ bind_blackhole_include_zones }}";
+{% endif %}
+
+{% if not bind_chrooted %}
+{% set mypath=bind_directory + '/' + bind_config_standard_zones_path %}
+{% else %}
+{% set mypath=bind_config_standard_zones_path %}
+{% endif %}
 
 {% if bind_zone_localhost_enable %}
-zone "localhost." { type master; file "{{ bind_config_standard_zones_path }}/localhost.db"; };
+zone "localhost." { type master; file "{{ mypath }}/localhost.db"; };
 {% endif %}
 {% if bind_zone_loopback_v4_enable %}
-zone "127.in-addr.arpa" { type master; file "{{ bind_config_standard_zones_path }}/loopback_v4.db"; };
+zone "127.in-addr.arpa" { type master; file "{{ mypath }}/loopback_v4.db"; };
 {% endif %}
 {% if bind_zone_loopback_v6_enable %}
-zone "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" { type master; file "{{ bind_config_standard_zones_path }}/loopback_v6.db"; };
+zone "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" { type master; file "{{ mypath }}/loopback_v6.db"; };
 {% endif %}
 {% if bind_zones | length >0 %}
 {% for v in bind_zones %}
@@ -135,7 +154,12 @@ zone "{{ v.name }}" {
 {% if v.file is defined %}
 	file "{{ v.file }}";
 {% else %}
-	file "{{ bind_config_dynamic_zones_path  if v.dynamic|default(false) else bind_config_master_zones_path if v.type == 'master' else bind_config_slave_zones_path }}/{{ v.name }}.db";
+{% set myfile= bind_config_dynamic_zones_path  if v.dynamic|default(false) else bind_config_master_zones_path if v.type == 'master' else bind_config_slave_zones_path %}
+{% set myfile= myfile + '/' + v.name + '.db' %}
+{% if not bind_chrooted %}
+{% set myfile= bind_directory + '/' + myfile %}
+{% endif %}
+        file "{{ myfile }}";
 {% endif %}
 {% endif %}
 {% if v.parameters is defined %}

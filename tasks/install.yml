@@ -3,7 +3,15 @@
   set_fact: 
     bind_package_name: "{{ bind_package_name|default ( _bind_package_name ) }}"
 
-- debug: var=bind_package_name
+#- debug: var=bind_package_name
 
-- name: install bind package 
+- name: install bind package (OpenBSD)
   openbsd_pkg: name={{ bind_package_name }} state=present
+  when: ansible_os_family == 'OpenBSD'
+
+- name: install bind package (FreeBSD)
+  pkgng: name={{ bind_package_name }} state=present
+  when: ansible_os_family == 'FreeBSD'
+
+
+

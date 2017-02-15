@@ -1,0 +1,55 @@
+---
+bind_blackhole_malwaredomain_blocklist_url: 'http://mirror2.malwaredomains.com/files/justdomains'
+bind_zone_loopback_v6_enable: False
+bind_dns_fqdn_name: "{{ ansible_host }}"
+bind_hostmaster_name: hostmaster.home
+bind_acls: 
+  - name: goodclients
+    addr_list: ['172.16.0.0/12' ,'127.0.0.1','10.0.0.0/8','192.168.0.0/16']
+bind_options_allow_recursion: ['goodclients']
+bind_options_allow_query: ['goodclients']
+bind_options_additionals: []
+bind_options_listen_ipv4: [ '127.0.0.1' ,'172.31.2.131']
+bind_logging_channels:
+  - name: default
+    out: syslog daemon
+    severity: Error
+  - name: update_log
+    severity: "info"
+    file: 
+      name: "logs/update.log"
+      version: 5
+      size: "3M"
+    print_time: yes
+    print_category: yes
+    print_severity: yes
+  - name: test_log
+    file:
+      name: "logs/test.log"
+bind_logging_categories:
+  - name: default
+    channels: [ 'default']
+  - name: update
+    channels: [ 'update_log' ]
+bind_keys:
+  - key:  "ddns-key"
+    algorithm: 'hmac-md5'
+    secret: "0jnu3SdsMvzzlmTDPYRceA=="
+bind_zones:
+  - name: 'home.dhcp'
+    type: master
+    dynamic: true
+    managed: false
+  - name: 'vmlab.lan'
+    type: forward
+    forwarders: ['172.30.0.11','172.30.0.12']
+  - name: 'home'
+    type: master
+    managed: true
+    content:
+      records:
+        - { name: "switch1" , type: A , rdata: "172.31.1.1" }
+  - name: 'mgmt.home'
+    type: stub
+    parameters:
+      - 'masters { 172.30.0.11; 172.30.0.12; }'
