@@ -12,7 +12,7 @@ if [ "$?" == "1" ]; then
   echo "download of $URL failed ...exit"
   exit 1
 fi
-cat spywaredomains.zones.download | sed s/"\/etc\/namedb\/blockeddomain\.hosts"/"blackhole\/blackholedomain\.fake\..zone"/g > spywaredomains.zones.tmp
+cat spywaredomains.zones.download | sed s/"\/etc\/namedb\/blockeddomain\.hosts\";"/"blackhole\/blackholedomain\.fake\.zone\"; check-names ignore;"/g > spywaredomains.zones.tmp
 diff -q spywaredomains.zones.tmp spywaredomains.zones
 if [ "$?" != "0" ]; then
   echo "domains list need update..."

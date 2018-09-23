@@ -4,10 +4,10 @@ _bind_package_name: isc-bind--
 bind_service_name: named
 bind_user: _bind
 bind_group: _bind
-bind_blackhole_malwaredomain_blocklist_url: 'http://mirror2.malwaredomains.com/files/justdomains'
+bind_blackhole_malwaredomain_blocklist_url: 'http://mirror1.malwaredomains.com/files/spywaredomains.zones'
 bind_blackhole_folder: 'blackhole'
-bind_blackhole_zonefile: 'blackholedomains.zone'
-bind_blackhole_include_zones: 'blackholedomains.list'
+bind_blackhole_zonefile: 'blackholedomain.fake.zone'
+bind_blackhole_include_zones: 'spywaredomains.zones'
 bind_blackhole_hole_ip: '127.0.0.1'
 bind_dns_fqdn_name: "{{ ansible_fqdn }}"
 bind_hostmaster_name: "postmaster.{{ ansible_fqdn }}"
