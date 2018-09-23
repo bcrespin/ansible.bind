@@ -2,22 +2,22 @@
 ## this file is ansible managed
 ## do not edit by hand
 
-URL="{{ bind_blackhole_malwaredomain_blocklist_url }}"
+URL="http://mirror1.malwaredomains.com/files/spywaredomains.zones"
 
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 cd $SCRIPT_DIR
 
-ftp -o blackholedomains.download $URL
+ftp -o spywaredomains.zones.download $URL
 if [ "$?" == "1" ]; then
   echo "download of $URL failed ...exit"
   exit 1
 fi
-cat blackholedomains.download | grep -v '^#' | grep -v '^$' | awk '{ print "zone \" $1 \" { type master; file \"{{ bind_blackhole_folder }}/{{ bind_blackhole_zonefile }}\"; check-names ignore; };" }' >  blackholedomains.tmp
-diff -q blackholedomains.tmp blackholedomains.list
-if [ "$?" == "1" ]; then
+cat spywaredomains.zones.download | sed s/"\/etc\/namedb\/blockeddomain\.hosts"/"blackhole\/blackholedomain\.fake\..zone"/g > spywaredomains.zones.tmp
+diff -q spywaredomains.zones.tmp spywaredomains.zones
+if [ "$?" != "0" ]; then
   echo "domains list need update..."
-  cp {{ bind_blackhole_include_zones }} blackholedomains.old
-  cp blackholedomains.download {{ bind_blackhole_include_zones }}
+  cp spywaredomains.zones spywaredomains.zones.old
+  cp spywaredomains.zones.tmp spywaredomains.zones
   echo "reload bind"
   /etc/rc.d/isc_named reload
   exit 0
@@ -25,3 +25,4 @@ else
   echo "no update..exit"
   exit 0
 fi
+
